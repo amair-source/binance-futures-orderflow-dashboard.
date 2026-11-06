@@ -2,12 +2,14 @@ name: Keep Render Awake
 
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "*/1 * * * *"
   workflow_dispatch:
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
+      - name: Wait for page load
+        run: google-chrome --headless --disable-gpu --no-sandbox --virtual-time-budget=10000 --dump-dom https://kronos-apex.onrender.com/health > /dev/null
       - name: Ping health endpoint
         run: curl -fsS --retry 3 --retry-delay 20 --max-time 90 https://kronos-apex.onrender.com/health
