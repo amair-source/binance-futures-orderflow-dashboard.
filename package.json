@@ -1,0 +1,15 @@
+{
+  "name": "kronos-apex",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "SMC + ICT + orderflow confluence terminal with Telegram A++ alerts",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node bot.js",
+    "scan": "node scripts/scan-once.js",
+    "test-telegram": "node scripts/test-telegram.js"
+  }
+}

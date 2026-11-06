@@ -1,0 +1,79 @@
+services:
+  - type: web
+    name: kronos-apex
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false
+      - key: UPSTASH_REDIS_REST_URL
+        sync: false
+      - key: UPSTASH_REDIS_REST_TOKEN
+        sync: false
+      - key: STATE_KEY
+        value: kronos-apex-state
+      - key: SYMBOLS
+        value: BTCUSDT,ETHUSDT,SOLUSDT,UNIUSDT,XAUTUSDT
+      - key: SCAN_INTERVAL_MS
+        value: "60000"
+      - key: A_PLUS_THRESHOLD
+        value: "88"
+      - key: SIGNAL_COOLDOWN_MS
+        value: "28800000"
+      - key: DRY_RUN
+        value: "false"
+      - key: PROP_MODE
+        value: "true"
+      - key: ACCOUNT_BALANCE
+        value: "5000"
+      - key: RISK_PER_TRADE_PCT
+        value: "0.2"
+      - key: MAX_RISK_USD
+        value: "25"
+      - key: MAX_TRADES_PER_DAY
+        value: "2"
+      - key: MAX_OPEN_TRADES
+        value: "1"
+      - key: DAILY_LOSS_LIMIT_USD
+        value: "250"
+      - key: TOTAL_LOSS_LIMIT_USD
+        value: "500"
+      - key: DAILY_STOP_USD
+        value: "150"
+      - key: TOTAL_STOP_USD
+        value: "350"
+      - key: CONTRACT_SIZES
+        value: BTCUSDT:1,ETHUSDT:1,SOLUSDT:1,UNIUSDT:1,XAUTUSDT:1
+      - key: LOT_STEP
+        value: "0.01"
+      - key: MIN_RR
+        value: "2.5"
+      - key: MIN_ADX
+        value: "20"
+      - key: SESSION_FILTER
+        value: "true"
+      - key: MIN_ATR_PCT
+        value: "0.15"
+      - key: MAX_ATR_PCT
+        value: "1.5"
+      - key: MAX_SPREAD_PCT
+        value: "0.05"
+      - key: REQUIRE_SWEEP
+        value: "true"
+      - key: REQUIRE_DISPLACEMENT
+        value: "true"
+      - key: REQUIRE_LIQUIDITY_TARGET
+        value: "true"
+      - key: STRICT_HTF
+        value: "true"
