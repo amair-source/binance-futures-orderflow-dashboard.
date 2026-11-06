@@ -1,0 +1,3 @@
+# Kronos
+
+Bot status notes.
