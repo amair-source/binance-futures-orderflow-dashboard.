@@ -26,7 +26,7 @@ services:
       - key: SYMBOLS
         value: BTCUSDT,ETHUSDT,SOLUSDT,UNIUSDT,XAUTUSDT
       - key: SCAN_INTERVAL_MS
-        value: "60000"
+        value: "120000"
       - key: A_PLUS_THRESHOLD
         value: "88"
       - key: SIGNAL_COOLDOWN_MS

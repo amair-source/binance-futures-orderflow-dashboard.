@@ -1,24 +1,104 @@
 const FAPI = 'https://fapi.binance.com';
 const FDATA = 'https://fapi.binance.com/futures/data';
 
+let banUntil = 0;
+let banLogged = false;
+let bannedIp = '';
+
+class BinanceBanError extends Error {
+  constructor(message, until) {
+    super(message);
+    this.name = 'BinanceBanError';
+    this.until = until;
+  }
+}
+
+export function getBinanceBan() {
+  if (banUntil && banUntil <= Date.now()) {
+    banUntil = 0;
+    banLogged = false;
+    bannedIp = '';
+  }
+  if (!banUntil) return null;
+  return {
+    until: banUntil,
+    iso: new Date(banUntil).toISOString(),
+    ip: bannedIp || null,
+  };
+}
+
+function parseBanUntil(response, body) {
+  const now = Date.now();
+  let until = 0;
+  const retryAfter = Number(response.headers.get('retry-after'));
+  if (Number.isFinite(retryAfter) && retryAfter > 0) {
+    until = now + retryAfter * 1000;
+  }
+  const match = /banned until (\d{10,13})/i.exec(body);
+  if (match) {
+    let raw = Number(match[1]);
+    if (raw < 1e12) raw *= 1000;
+    if (raw > until) until = raw;
+  }
+  return until || now + 60000;
+}
+
 async function getJson(url, attempts = 2) {
+  const activeBan = getBinanceBan();
+  if (activeBan) {
+    throw new BinanceBanError(
+      `Binance IP ban active${activeBan.ip ? ` for ${activeBan.ip}` : ''}; paused until ${activeBan.iso}`,
+      activeBan.until,
+    );
+  }
+
   let lastError;
   for (let attempt = 0; attempt < attempts; attempt += 1) {
+    let response;
     try {
-      const response = await fetch(url, {
+      response = await fetch(url, {
         signal: AbortSignal.timeout(10000),
         headers: { 'user-agent': 'kronos-apex/1.0' },
       });
-      if (!response.ok) {
-        const body = await response.text();
-        throw new Error(`${response.status} ${response.statusText} ${body.slice(0, 200)}`);
-      }
-      return await response.json();
     } catch (error) {
       lastError = error;
       if (attempt < attempts - 1) {
         await new Promise((resolve) => setTimeout(resolve, 400));
       }
+      continue;
+    }
+
+    if (response.ok) {
+      return await response.json();
+    }
+
+    const body = await response.text();
+    if (response.status === 418 || response.status === 429) {
+      const until = parseBanUntil(response, body);
+      if (until > banUntil) {
+        banUntil = until;
+        banLogged = false;
+      }
+      const ipMatch = /IP\(([^)]+)\)/.exec(body);
+      if (ipMatch) bannedIp = ipMatch[1];
+      const iso = new Date(banUntil).toISOString();
+      if (!banLogged) {
+        console.warn(
+          `[binance] rate limited; IP ${bannedIp || 'unknown'} banned until ${iso}`,
+        );
+        banLogged = true;
+      }
+      throw new BinanceBanError(
+        `Binance rate limit ${response.status}${bannedIp ? ` for IP ${bannedIp}` : ''}; paused until ${iso}`,
+        banUntil,
+      );
+    }
+
+    lastError = new Error(
+      `${response.status} ${response.statusText} ${body.slice(0, 200)}`,
+    );
+    if (attempt < attempts - 1) {
+      await new Promise((resolve) => setTimeout(resolve, 400));
     }
   }
   throw lastError;

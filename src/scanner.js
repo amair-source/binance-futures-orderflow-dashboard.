@@ -1,5 +1,5 @@
 import { config } from './env.js';
-import { fetchSymbolData } from './binance.js';
+import { fetchSymbolData, getBinanceBan } from './binance.js';
 import { analyzeSymbol } from './confluence.js';
 import { loadState, saveState } from './state.js';
 import { formatFeedbackPrompt, formatSignal } from './format.js';
@@ -184,6 +184,13 @@ async function scanOne(symbol) {
 }
 
 async function runScan(symbols) {
+  const ban = getBinanceBan();
+  if (ban) {
+    const message = `Binance IP ban active${ban.ip ? ` for ${ban.ip}` : ''}; paused until ${ban.iso}`;
+    console.warn(`[scan] ${message}`);
+    return symbols.map((symbol) => ({ symbol, error: message }));
+  }
+
   const queue = [...symbols];
   const collected = [];
   const workerCount = Math.min(2, queue.length);
